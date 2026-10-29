@@ -1,0 +1,5 @@
+services:
+  web:
+    image: ${APP_IMAGE:?Set APP_IMAGE to ghcr.io/lpioro/mdocs:v0.1.0}
+    pull_policy: always
+    build: !reset null

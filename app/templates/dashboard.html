@@ -1,0 +1,14 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Dashboard</h1><div class="row g-3 mb-4">
+<div class="col-md-4"><div class="card card-body"><h6>Klienci</h6><strong class="display-6">{{ clients|length }}</strong></div></div>
+<div class="col-md-4"><div class="card card-body"><h6>Dokumenty</h6><strong class="display-6">{{ document_count }}</strong></div></div>
+<div class="col-md-4"><div class="card card-body"><h6>Nieznani nadawcy</h6><strong class="display-6">{{ unknown }}</strong></div></div></div>
+<div class="row g-3"><div class="col-md-6"><div class="card card-body"><h4>Klienci</h4>
+{% for c in clients %}<a href="{{ url_for('main.client', client_id=c.id) }}" class="d-block py-1">{{ c.name }}</a>{% else %}<p>Brak klientów</p>{% endfor %}</div></div>
+<div class="col-md-6"><div class="card card-body"><h4>Symulacja wpływu maila</h4>
+<form method="post" action="{{ url_for('main.add_email') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input class="form-control mb-2" name="sender" type="email" placeholder="Nadawca" required>
+<input class="form-control mb-2" name="subject" placeholder="Temat" required>
+<button class="btn btn-primary">Zarejestruj</button></form>
+<hr><h5>Ostatnie wiadomości</h5>{% for e in emails %}<div class="border-bottom py-2">{{ e.sender }} — {{ e.subject }} {% if e.client_id is none %}<span class="badge text-bg-warning">nieznany</span>{% endif %}</div>{% else %}<p>Brak wiadomości</p>{% endfor %}</div></div></div>
+{% endblock %}
