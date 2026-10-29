@@ -1,0 +1,19 @@
+{% extends 'base.html' %}{% block content %}<a href="{{ url_for('main.clients') }}">← Klienci</a><h1>{{ client.name }}</h1>
+<p>NIP: {{ client.nip or '—' }} • E-mail: {{ client.email or '—' }}</p>
+<div class="row g-3"><div class="col-md-6"><div class="card card-body"><h5>Nowy dokument</h5>
+<form method="post" action="{{ url_for('main.add_document', client_id=client.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input class="form-control mb-2" name="name" placeholder="Nazwa dokumentu" required>
+<select class="form-select mb-2" name="kind"><option>Faktura</option><option>Wyciąg</option><option>Inny</option></select>
+<input class="form-control mb-2" type="month" name="period" required>
+<button class="btn btn-primary">Dodaj</button></form>
+<hr><h6>Dokumenty</h6>{% for d in docs %}<div>{{ d.period }} — {{ d.name }} ({{ d.kind }})</div>{% else %}<p>Brak dokumentów</p>{% endfor %}
+</div></div><div class="col-md-6"><div class="card card-body"><h5>Powiązanie adresu e-mail</h5>
+<form method="post" action="{{ url_for('main.add_sender', client_id=client.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input class="form-control mb-2" type="email" name="email" placeholder="e-mail nadawcy" required>
+<button class="btn btn-outline-primary">Przypisz</button></form>
+{% for s in client.senders %}<div>{{ s.email }}</div>{% endfor %}
+<hr><h5>Szkic przypomnienia</h5><form method="post" action="{{ url_for('main.add_reminder', client_id=client.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input class="form-control mb-2" name="period" type="month" required>
+<button class="btn btn-outline-primary">Utwórz szkic</button></form>
+</div></div></div>{% endblock %}

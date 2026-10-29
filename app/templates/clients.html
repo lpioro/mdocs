@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% block content %}<h1>Klienci</h1>
+<div class="card card-body mb-4"><h5>Nowy klient</h5><form method="post" class="row g-2">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="col-md-5"><input class="form-control" name="name" placeholder="Nazwa firmy" required></div>
+<div class="col-md-3"><input class="form-control" name="nip" placeholder="NIP"></div>
+<div class="col-md-3"><input class="form-control" name="email" type="email" placeholder="E-mail"></div>
+<div class="col-md-1"><button class="btn btn-primary">Dodaj</button></div></form></div>
+<div class="list-group">{% for c in clients %}<a class="list-group-item list-group-item-action" href="{{ url_for('main.client', client_id=c.id) }}">{{ c.name }} — {{ c.nip or 'bez NIP' }}</a>{% endfor %}</div>{% endblock %}
