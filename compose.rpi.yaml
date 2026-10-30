@@ -2,7 +2,7 @@
 # Deploy with: docker compose -f compose.rpi.yaml up -d
 services:
   web:
-    image: ${APP_IMAGE:-ghcr.io/lpioro/mdocs:v0.2.0}
+    image: ${APP_IMAGE:-ghcr.io/lpioro/mdocs:arm64-0.2.0}
     restart: unless-stopped
     init: true
     environment:
