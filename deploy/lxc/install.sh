@@ -17,7 +17,7 @@ fi
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y python3 python3-venv python3-pip git ca-certificates
+apt-get install -y python3 python3-venv python3-pip git ca-certificates curl
 
 if ! id -u mdocs >/dev/null 2>&1; then
   useradd --system --home-dir /var/lib/mdocs --shell /usr/sbin/nologin --user-group mdocs
