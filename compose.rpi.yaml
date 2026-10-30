@@ -1,0 +1,25 @@
+# Standalone Compose file for Raspberry Pi Zero 2 W, 64-bit OS.
+# Deploy with: docker compose -f compose.rpi.yaml up -d
+services:
+  web:
+    image: ${APP_IMAGE:-ghcr.io/lpioro/mdocs:v0.2.0}
+    restart: unless-stopped
+    init: true
+    environment:
+      APP_ENV: production
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      DATABASE_URL: sqlite:////data/monitor.db
+      COOKIE_SECURE: ${COOKIE_SECURE:-0}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - sqlite_data:/data
+    mem_limit: 320m
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 30s
+      timeout: 6s
+      retries: 3
+      start_period: 30s
+volumes:
+  sqlite_data:
