@@ -1,14 +1,49 @@
 {% extends 'base.html' %}{% block content %}
-<h1>Dashboard</h1><div class="row g-3 mb-4">
-<div class="col-md-4"><div class="card card-body"><h6>Klienci</h6><strong class="display-6">{{ clients|length }}</strong></div></div>
-<div class="col-md-4"><div class="card card-body"><h6>Dokumenty</h6><strong class="display-6">{{ document_count }}</strong></div></div>
-<div class="col-md-4"><div class="card card-body"><h6>Nieznani nadawcy</h6><strong class="display-6">{{ unknown }}</strong></div></div></div>
-<div class="row g-3"><div class="col-md-6"><div class="card card-body"><h4>Klienci</h4>
-{% for c in clients %}<a href="{{ url_for('main.client', client_id=c.id) }}" class="d-block py-1">{{ c.name }}</a>{% else %}<p>Brak klientów</p>{% endfor %}</div></div>
-<div class="col-md-6"><div class="card card-body"><h4>Symulacja wpływu maila</h4>
-<form method="post" action="{{ url_for('main.add_email') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-<input class="form-control mb-2" name="sender" type="email" placeholder="Nadawca" required>
-<input class="form-control mb-2" name="subject" placeholder="Temat" required>
-<button class="btn btn-primary">Zarejestruj</button></form>
-<hr><h5>Ostatnie wiadomości</h5>{% for e in emails %}<div class="border-bottom py-2">{{ e.sender }} — {{ e.subject }} {% if e.client_id is none %}<span class="badge text-bg-warning">nieznany</span>{% endif %}</div>{% else %}<p>Brak wiadomości</p>{% endfor %}</div></div></div>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div><div class="subtitle mb-1">Panel operacyjny / Monitor Dokumentów</div><h1 class="h3 fw-bold mb-1">Przegląd dokumentów</h1><div class="subtitle">Status obiegu i identyfikacji dokumentów klientów</div></div>
+  <form class="d-flex align-items-center gap-2" method="get"><label for="period" class="subtitle text-nowrap">Okres:</label><input id="period" name="period" class="form-control form-control-sm" type="month" value="{{ period }}"><button class="btn btn-primary btn-sm">Pokaż</button></form>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3"><div class="panel p-3 h-100"><div class="d-flex justify-content-between"><span class="kpi-label">Aktywni klienci</span><span class="kpi-icon">♧</span></div><div class="kpi-num">{{ active_count }}</div><div class="subtitle">W bazie klientów</div></div></div>
+  <div class="col-6 col-xl-3"><div class="panel p-3 h-100"><div class="d-flex justify-content-between"><span class="kpi-label">Kompletne okresy*</span><span class="kpi-icon" style="background:#e4f8ec;color:#218451">✓</span></div><div class="kpi-num">{{ completed_count }}</div><div class="subtitle">Co najmniej jeden dokument</div></div></div>
+  <div class="col-6 col-xl-3"><div class="panel p-3 h-100"><div class="d-flex justify-content-between"><span class="kpi-label">Bez dokumentów*</span><span class="kpi-icon" style="background:#fff5dc;color:#a27713">!</span></div><div class="kpi-num">{{ missing_count }}</div><div class="subtitle">Wybrany okres</div></div></div>
+  <div class="col-6 col-xl-3"><div class="panel p-3 h-100"><div class="d-flex justify-content-between"><span class="kpi-label">Nieznani nadawcy</span><span class="kpi-icon" style="background:#ffeded;color:#c34444">✉</span></div><div class="kpi-num">{{ unknown }}</div><div class="subtitle">Wymagają identyfikacji</div></div></div>
+</div>
+<div class="row g-3 mb-4">
+ <div class="col-12 col-xl-8"><section class="panel p-3 p-lg-4 h-100">
+ <div class="section-head"><div><h2 class="panel-title">Status dokumentów klientów</h2><div class="subtitle">Okres {{ period }} · sortowanie wg nazwy</div></div><a href="{{ url_for('main.clients') }}" class="btn btn-sm btn-outline-primary">Wszyscy klienci</a></div>
+ <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Klient</th><th>Dokumenty</th><th>Status*</th><th>Ostatni wpływ</th><th></th></tr></thead><tbody>
+ {% for row in client_statuses %}<tr><td><span class="avatar">{{ row.client.name[0]|upper }}</span><strong>{{ row.client.name }}</strong><div class="subtitle ms-5">{{ row.client.nip or 'Brak NIP' }}</div></td>
+ <td>{{ row.count }}</td><td>{% if row.count %}<span class="pill pill-green">Dokumenty otrzymane</span>{% else %}<span class="pill pill-yellow">Brak dokumentów</span>{% endif %}</td>
+ <td class="subtitle">{{ row.last.strftime('%d.%m.%Y') if row.last else '—' }}</td>
+ <td><a class="text-decoration-none" href="{{ url_for('main.client', client_id=row.client.id) }}">Szczegóły →</a></td></tr>
+ {% else %}<tr><td colspan="5" class="text-center subtitle py-4">Brak klientów. Dodaj pierwszego klienta.</td></tr>{% endfor %}
+ </tbody></table></div></section></div>
+ <div class="col-12 col-xl-4"><section class="panel p-3 p-lg-4 h-100" id="unknown">
+ <div class="section-head"><h2 class="panel-title">Nieznani nadawcy</h2><span class="pill pill-red">{{ unknown }}</span></div>
+ <p class="subtitle mb-3">Wiadomości bez przypisanego klienta</p>
+ {% for msg in unknown_emails %}<div class="border-bottom py-3"><div class="fw-semibold" style="font-size:.88rem">{{ msg.sender }}</div><div class="subtitle text-truncate">{{ msg.subject }}</div><div class="d-flex justify-content-between mt-2"><small class="text-secondary">{{ msg.received_at.strftime('%d.%m.%Y') }}</small><span class="pill pill-yellow">Do przypisania</span></div></div>
+ {% else %}<div class="subtitle py-4">Brak nieznanych nadawców.</div>{% endfor %}
+ <div class="alert alert-light border mt-3 small mb-0">Aby powiązać adres e-mail, otwórz kartę klienta i dodaj nadawcę.</div></section></div>
+</div>
+<div class="row g-3">
+ <div class="col-12 col-xl-7"><section class="panel p-3 p-lg-4 h-100" id="documents">
+ <div class="section-head"><h2 class="panel-title">Ostatnie dokumenty</h2><span class="pill pill-blue">{{ document_count }} łącznie</span></div>
+ <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Dokument</th><th>Klient</th><th>Okres</th><th>Typ</th></tr></thead><tbody>
+ {% for doc in recent_documents %}<tr><td class="fw-semibold">{{ doc.name }}</td><td>{{ doc.client.name }}</td><td>{{ doc.period }}</td><td><span class="pill pill-blue">{{ doc.kind }}</span></td></tr>
+ {% else %}<tr><td colspan="4" class="text-center subtitle py-4">Nie zarejestrowano jeszcze dokumentów.</td></tr>{% endfor %}
+ </tbody></table></div></section></div>
+ <div class="col-12 col-xl-5"><section class="panel p-3 p-lg-4 h-100" id="inbox">
+ <div class="section-head"><h2 class="panel-title">Poczta / test wpływu</h2><span class="pill pill-blue">Symulator</span></div>
+ <form method="post" action="{{ url_for('main.add_email') }}" class="mb-3">
+ <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+ <div class="mb-2"><label class="form-label small">Nadawca</label><input class="form-control form-control-sm" type="email" name="sender" placeholder="firma@example.com" required></div>
+ <div class="mb-2"><label class="form-label small">Temat wiadomości</label><input class="form-control form-control-sm" name="subject" placeholder="Dokumenty za miesiąc..." required></div>
+ <button class="btn btn-primary btn-sm">Zarejestruj testowy e-mail</button></form>
+ <div class="fw-semibold small mb-2">Ostatnie wiadomości</div>
+ {% for msg in emails %}<div class="d-flex justify-content-between gap-2 border-top py-2"><div class="overflow-hidden"><div class="fw-semibold text-truncate small">{{ msg.subject }}</div><div class="subtitle text-truncate">{{ msg.sender }}</div></div><div>{% if msg.client_id %}<span class="pill pill-green">Rozpoznany</span>{% else %}<span class="pill pill-yellow">Nieznany</span>{% endif %}</div></div>
+ {% else %}<div class="subtitle py-2">Brak wiadomości.</div>{% endfor %}
+ </section></div>
+</div>
+<p class="subtitle mt-3 mb-0">* Status jest orientacyjny: „dokumenty otrzymane” oznacza co najmniej jeden dokument w okresie. Pełna kompletność wymaga zdefiniowania listy dokumentów wymaganych dla każdego klienta.</p>
 {% endblock %}
