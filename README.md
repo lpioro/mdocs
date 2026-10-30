@@ -32,6 +32,10 @@ docker compose -f compose.rpi.yaml up -d
 
 Wymaga obrazu z manifestem `linux/arm64`, opublikowanego w GHCR.
 
+## Native LXC deployment (without Docker)
+
+For Proxmox LXC (Debian/Ubuntu) using Python venv, SQLite and a systemd service, see [docs/LXC_NATIVE.md](docs/LXC_NATIVE.md).
+
 ## Testy
 
 ```bash
