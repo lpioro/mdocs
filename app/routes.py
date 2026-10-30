@@ -29,11 +29,38 @@ def logout():
 
 @bp.get("/")
 def dashboard():
-    clients = db.session.execute(db.select(Client).order_by(Client.name)).scalars().all()
-    emails = db.session.execute(db.select(EmailMessage).order_by(EmailMessage.id.desc()).limit(10)).scalars().all()
+    from datetime import date
+    period = request.args.get("period", date.today().strftime("%Y-%m"))
+    try:
+        datetime.strptime(period, "%Y-%m")
+    except ValueError:
+        abort(400)
+    clients = db.session.execute(db.select(Client).where(Client.active.is_(True)).order_by(Client.name)).scalars().all()
+    documents = db.session.execute(db.select(Document).where(Document.period == period)).scalars().all()
+    by_client = {}
+    for doc in documents:
+        item = by_client.setdefault(doc.client_id, {"count": 0, "last": None})
+        item["count"] += 1
+        if item["last"] is None or doc.received_at > item["last"]:
+            item["last"] = doc.received_at
+    client_statuses = [
+        {"client": c, "count": by_client.get(c.id, {}).get("count", 0),
+         "last": by_client.get(c.id, {}).get("last")}
+        for c in clients
+    ]
+    emails = db.session.execute(db.select(EmailMessage).order_by(EmailMessage.id.desc()).limit(5)).scalars().all()
+    unknown_emails = db.session.execute(db.select(EmailMessage).where(EmailMessage.client_id.is_(None)).order_by(EmailMessage.id.desc()).limit(5)).scalars().all()
     unknown = db.session.scalar(db.select(func.count()).select_from(EmailMessage).where(EmailMessage.client_id.is_(None)))
     document_count = db.session.scalar(db.select(func.count()).select_from(Document))
-    return render_template("dashboard.html", clients=clients, emails=emails, unknown=unknown, document_count=document_count)
+    recent_documents = db.session.execute(db.select(Document).order_by(Document.id.desc()).limit(7)).scalars().all()
+    completed_count = sum(row["count"] > 0 for row in client_statuses)
+    return render_template(
+        "dashboard.html", clients=clients, emails=emails, unknown=unknown,
+        period=period, active_count=len(clients), completed_count=completed_count,
+        missing_count=len(clients)-completed_count, client_statuses=client_statuses,
+        unknown_emails=unknown_emails, recent_documents=recent_documents,
+        document_count=document_count,
+    )
 
 @bp.route("/clients", methods=["GET","POST"])
 def clients():
