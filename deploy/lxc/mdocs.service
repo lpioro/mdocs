@@ -1,0 +1,23 @@
+[Unit]
+Description=Monitor Dokumentow (mdocs Flask/Gunicorn)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mdocs
+Group=mdocs
+WorkingDirectory=/opt/mdocs
+EnvironmentFile=/etc/mdocs/mdocs.env
+ExecStart=/opt/mdocs/.venv/bin/gunicorn --bind 127.0.0.1:8000 --workers 1 --threads 2 --access-logfile - --error-logfile - wsgi:app
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/mdocs
+PrivateTmp=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
